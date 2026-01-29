@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(chmod:*)",
+      "Bash(./bin/note:*)",
+      "Bash(bun run:*)",
+      "Bash(bun test)",
+      "Bash(npx next lint)",
+      "Bash(cat:*)",
+      "Bash(jq:*)",
+      "WebFetch(domain:chris.lu)",
+      "Bash(npx eslint:*)",
+      "Bash(ralph find-next:*)",
+      "Bash(ralph:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
