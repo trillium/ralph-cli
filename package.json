@@ -4,6 +4,23 @@
   "description": "Ralph CLI - Autonomous Development Loop System",
   "type": "module",
   "main": "tools/ralph.ts",
+  "exports": {
+    ".": "./tools/ralph.ts",
+    "./tools/ralph": "./tools/ralph.ts",
+    "./agents/*": "./agents/*",
+    "./commands/*": "./commands/*"
+  },
+  "files": [
+    "tools",
+    "agents",
+    "commands",
+    "README.md",
+    "AGENTS.md",
+    "QUICK_SETUP.md",
+    "FOR_OTHER_AGENT.md",
+    "RALPH-OVERVIEW.md",
+    "ACTIVE_ARCHIVE_WORKFLOW.md"
+  ],
   "scripts": {
     "test": "bunx vitest",
     "test:watch": "bunx vitest --watch",
@@ -21,6 +38,10 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/trillium/ralph-cli.git"
+  },
   "devDependencies": {
     "@types/bun": "^1.3.6",
     "@types/node": "^25.0.10",
