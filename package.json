@@ -1,6 +1,6 @@
 {
   "name": "ralph-cli",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Ralph CLI - Autonomous Development Loop System",
   "type": "module",
   "main": "tools/ralph.ts",
@@ -23,14 +23,18 @@
     "QUICK_SETUP.md",
     "FOR_OTHER_AGENT.md",
     "RALPH-OVERVIEW.md",
-    "ACTIVE_ARCHIVE_WORKFLOW.md"
+    "ACTIVE_ARCHIVE_WORKFLOW.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "test": "bunx vitest",
     "test:watch": "bunx vitest --watch",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "version:patch": "npm version patch",
+    "version:minor": "npm version minor",
+    "version:major": "npm version major"
   },
   "keywords": [
     "cli",
