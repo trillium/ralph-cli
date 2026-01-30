@@ -35,6 +35,7 @@ import { checkIsComplete } from './lib/is-complete.js'
 import { createProgressFile } from './lib/create-progress.js'
 import { createFailureDocument } from './lib/create-failure.js'
 import { createErrorIssue } from './lib/create-error.js'
+import { createSuggestionIssue } from './lib/create-suggestion.js'
 import { markStoryComplete } from './lib/mark-complete.js'
 import type { ProgressOptions } from './lib/create-progress.js'
 import { resolvePrdFile, readPrdFile, writePrdFile, findStoryById, resolveArchiveFile } from './lib/prd-utils.js'
@@ -298,6 +299,32 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: 'ralph_suggest',
+        description: 'Create a GitHub issue for a suggestion during story execution. Uses gh CLI to automatically spawn an issue in the repository with the enhancement label.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            storyId: {
+              type: 'string',
+              description: "Story ID (e.g., 'story-30')",
+            },
+            suggestion: {
+              type: 'string',
+              description: 'The suggestion or improvement idea',
+            },
+            context: {
+              type: 'string',
+              description: 'Additional context about what was happening when the suggestion arose (optional)',
+            },
+            rationale: {
+              type: 'string',
+              description: 'Why this suggestion would be beneficial (optional)',
+            },
+          },
+          required: ['storyId', 'suggestion'],
+        },
+      },
+      {
         name: 'ralph_addPrd',
         description: 'Add a new PRD entry with validation and duplicate checking. Auto-increments story ID if not provided. Supports custom PRD files (e.g., active.prd.json)',
         inputSchema: {
@@ -462,6 +489,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           error: args.error as string,
           context: args.context as string | undefined,
           attempted: args.attempted as string | undefined,
+        })
+        return {
+          content: [{ type: 'text', text: result }],
+        }
+      }
+
+      case 'ralph_suggest': {
+        const result = await createSuggestionIssue({
+          storyId: args.storyId as string,
+          suggestion: args.suggestion as string,
+          context: args.context as string | undefined,
+          rationale: args.rationale as string | undefined,
         })
         return {
           content: [{ type: 'text', text: result }],
