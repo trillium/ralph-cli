@@ -2,18 +2,59 @@
 
 This directory contains the Ralph CLI tooling for managing autonomous development loops.
 
-## Requirements
+## Installation
 
-**Bun Runtime:** Ralph CLI requires [Bun](https://bun.sh) to execute TypeScript files directly. The MCP server (`ralph-mcp`) uses `#!/usr/bin/env bun` and will not work with Node.js alone.
+### Homebrew (Recommended)
 
-Install Bun:
+The easiest way to install Ralph CLI is via Homebrew:
+
+```bash
+brew tap trillium/ralph-cli https://github.com/trillium/ralph-cli
+brew install ralph-cli
+```
+
+This will:
+- Install Bun automatically (required dependency)
+- Make `ralph-mcp` globally available in your PATH
+- Handle all dependencies and setup
+
+### Manual Installation
+
+If you prefer to install manually, you'll need [Bun](https://bun.sh) first:
+
 ```bash
 curl -fsSL https://bun.sh/install | bash
 ```
 
+Then install ralph-cli via npm:
+
+```bash
+npm install -g ralph-cli
+```
+
+**Note:** Ralph CLI requires Bun to execute TypeScript files directly. The MCP server (`ralph-mcp`) uses `#!/usr/bin/env bun` and will not work with Node.js alone.
+
 ## MCP Server Setup (Claude Code)
 
-Ralph CLI includes an MCP server for integration with Claude Code. After installing the package globally or locally, configure your `.mcp.json`:
+Ralph CLI includes an MCP server for integration with Claude Code.
+
+### If installed via Homebrew
+
+Configure your `.mcp.json` with:
+
+```json
+{
+  "mcpServers": {
+    "ralph": {
+      "command": "ralph-mcp"
+    }
+  }
+}
+```
+
+### If installed via npm
+
+Configure your `.mcp.json` with:
 
 ```json
 {
