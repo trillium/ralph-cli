@@ -19,6 +19,7 @@ import { blockStory as blockStoryImpl } from './lib/block-story.js'
 import { checkIsComplete } from './lib/is-complete.js'
 import { createProgressFile } from './lib/create-progress.js'
 import { createFailureDocument } from './lib/create-failure.js'
+import { createErrorIssue } from './lib/create-error.js'
 import { markStoryComplete } from './lib/mark-complete.js'
 import type { ProgressOptions } from './lib/create-progress.js'
 import { resolvePrdFile, readPrdFile, writePrdFile, findStoryById, resolveArchiveFile } from './lib/prd-utils.js'
@@ -256,6 +257,32 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: 'ralph_error',
+        description: 'Create a GitHub issue for an error encountered during story execution. Uses gh CLI to automatically spawn an issue in the repository.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            storyId: {
+              type: 'string',
+              description: "Story ID (e.g., 'story-30')",
+            },
+            error: {
+              type: 'string',
+              description: 'The error message or description of what went wrong',
+            },
+            context: {
+              type: 'string',
+              description: 'Additional context about what was happening when the error occurred (optional)',
+            },
+            attempted: {
+              type: 'string',
+              description: 'What was attempted before the error occurred (optional)',
+            },
+          },
+          required: ['storyId', 'error'],
+        },
+      },
+      {
         name: 'ralph_addPrd',
         description: 'Add a new PRD entry with validation and duplicate checking. Auto-increments story ID if not provided. Supports custom PRD files (e.g., active.prd.json)',
         inputSchema: {
@@ -408,6 +435,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           context: args.context as string | undefined,
           attempted: args.attempted as string | undefined,
           model: args.model as string | undefined,
+        })
+        return {
+          content: [{ type: 'text', text: result }],
+        }
+      }
+
+      case 'ralph_error': {
+        const result = await createErrorIssue({
+          storyId: args.storyId as string,
+          error: args.error as string,
+          context: args.context as string | undefined,
+          attempted: args.attempted as string | undefined,
         })
         return {
           content: [{ type: 'text', text: result }],

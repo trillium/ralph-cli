@@ -15,6 +15,7 @@ import { blockStory as blockStoryImpl } from './lib/block-story'
 import { checkIsComplete } from './lib/is-complete'
 import { createProgressFile } from './lib/create-progress'
 import { createFailureDocument } from './lib/create-failure'
+import { createErrorIssue } from './lib/create-error'
 import { markStoryComplete } from './lib/mark-complete'
 import type { ProgressOptions } from './lib/create-progress'
 
@@ -288,6 +289,41 @@ export const createFailure = tool({
       context: args.context,
       attempted: args.attempted,
       model: args.model,
+    })
+  },
+})
+
+/**
+ * Create a GitHub issue for an error encountered during story execution
+ *
+ * This tool uses the gh CLI to automatically create a GitHub issue
+ * with the error details, context, and what was attempted.
+ */
+export const error = tool({
+  description:
+    'Create a GitHub issue for an error encountered during story execution. Uses gh CLI to automatically spawn an issue in the repository.',
+  args: {
+    storyId: tool.schema.string().describe("Story ID (e.g., 'story-30')"),
+    error: tool.schema
+      .string()
+      .describe('The error message or description of what went wrong'),
+    context: tool.schema
+      .string()
+      .optional()
+      .describe(
+        'Additional context about what was happening when the error occurred (optional)'
+      ),
+    attempted: tool.schema
+      .string()
+      .optional()
+      .describe('What was attempted before the error occurred (optional)'),
+  },
+  async execute(args) {
+    return await createErrorIssue({
+      storyId: args.storyId,
+      error: args.error,
+      context: args.context,
+      attempted: args.attempted,
     })
   },
 })
