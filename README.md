@@ -2,6 +2,43 @@
 
 This directory contains the Ralph CLI tooling for managing autonomous development loops.
 
+## Requirements
+
+**Bun Runtime:** Ralph CLI requires [Bun](https://bun.sh) to execute TypeScript files directly. The MCP server (`ralph-mcp`) uses `#!/usr/bin/env bun` and will not work with Node.js alone.
+
+Install Bun:
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+## MCP Server Setup (Claude Code)
+
+Ralph CLI includes an MCP server for integration with Claude Code. After installing the package globally or locally, configure your `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "ralph": {
+      "command": "bunx",
+      "args": ["--bun", "ralph-mcp"]
+    }
+  }
+}
+```
+
+Or if installed globally:
+```json
+{
+  "mcpServers": {
+    "ralph": {
+      "command": "ralph-mcp"
+    }
+  }
+}
+```
+
+**Note:** The MCP server binary requires Bun because it executes TypeScript directly. If you encounter errors like `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`, ensure Bun is installed and the command uses `bunx --bun` or points directly to the `ralph-mcp` binary with Bun in your PATH.
+
 ## Integration with OpenCode
 
 Ralph CLI is a standalone workspace, but integrates with OpenCode via the `.opencode/` directory:
