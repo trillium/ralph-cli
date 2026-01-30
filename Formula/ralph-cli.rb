@@ -1,8 +1,8 @@
 class RalphCli < Formula
   desc "Autonomous Development Loop System - MCP server for AI-driven project management"
   homepage "https://github.com/trillium/ralph-cli"
-  url "https://github.com/trillium/ralph-cli/archive/refs/tags/v0.7.2.tar.gz"
-  sha256 "4d78828d68054dfcbfd03b76d55db6a721f0ef1f819602c63164b75d6e34d5e3"
+  url "https://github.com/trillium/ralph-cli/archive/refs/tags/v0.7.3.tar.gz"
+  sha256 "77c75b62cc3a58b402678125ca4c63adb700bceb02aa2deffc0040e16f1c46c9"
   license "MIT"
   head "https://github.com/trillium/ralph-cli.git", branch: "main"
 
