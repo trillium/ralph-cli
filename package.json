@@ -1,6 +1,6 @@
 {
   "name": "ralph-cli",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "Ralph CLI - Autonomous Development Loop System",
   "type": "module",
   "main": "tools/ralph.ts",
