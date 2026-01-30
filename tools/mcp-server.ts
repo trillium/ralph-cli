@@ -9,6 +9,21 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js'
+import { readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+// Read version from package.json
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'))
+const VERSION = packageJson.version
+
+// Handle --version flag
+if (process.argv.includes('--version') || process.argv.includes('-v')) {
+  console.log(VERSION)
+  process.exit(0)
+}
 
 // Import all the modular implementations (core logic)
 import { findNextStory } from './lib/find-next.js'
@@ -29,7 +44,7 @@ import path from 'path'
 const server = new Server(
   {
     name: 'ralph-cli',
-    version: '1.0.0',
+    version: VERSION,
   },
   {
     capabilities: {
