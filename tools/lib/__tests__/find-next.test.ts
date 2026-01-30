@@ -152,17 +152,5 @@ describe('find-next', () => {
       expect(parsed.story.priority).toBe('critical')
     })
 
-    it('should use specified PRD file', async () => {
-      const testDir = process.cwd()
-      await createTestPrd(testDir, 'custom.prd.json', {
-        stories: [sampleStories.critical],
-      })
-
-      const result = await findNextStory({ prdFile: 'custom.prd.json' })
-      const parsed = JSON.parse(result)
-      expect(parsed.available).toBe(true)
-      expect(parsed.story.id).toBe('story-1')
-      expect(parsed.story.title).toBe('Critical Story')
-    })
   })
 })

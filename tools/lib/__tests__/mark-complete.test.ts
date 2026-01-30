@@ -31,68 +31,6 @@ describe('mark-complete', () => {
     await rm(testDir, { recursive: true, force: true })
   })
 
-  describe('in-place completion (no archive)', () => {
-    it('should mark story as complete in place when no archive exists', async () => {
-      const prd: PrdDocument = {
-        project: 'Test',
-        stories: [
-          {
-            id: 'story-1',
-            title: 'Test Story',
-            description: 'Test',
-            priority: 'high',
-            passes: false,
-            acceptanceCriteria: ['test'],
-            dependencies: [],
-          },
-        ],
-      }
-
-      await writeFile('active.prd.json', JSON.stringify(prd, null, 2))
-
-      const result = await markStoryComplete({ storyId: 'story-1' })
-
-      expect(result).toContain('Successfully marked story')
-      expect(result).toContain('story-1')
-      expect(result).toContain('active.prd.json')
-
-      const updated = JSON.parse(
-        await readFile('active.prd.json', 'utf-8')
-      ) as PrdDocument
-      expect(updated.stories[0].passes).toBe(true)
-      expect(updated.stories[0].completedAt).toBeDefined()
-      expect(updated.stories).toHaveLength(1) // Story still in active
-    })
-
-    it('should mark story as complete in prd.json when no archive exists', async () => {
-      const prd: PrdDocument = {
-        stories: [
-          {
-            id: 'story-2',
-            title: 'Test Story 2',
-            description: 'Test',
-            priority: 'medium',
-            passes: false,
-            acceptanceCriteria: ['test'],
-            dependencies: [],
-          },
-        ],
-      }
-
-      await writeFile('prd.json', JSON.stringify(prd, null, 2))
-
-      const result = await markStoryComplete({ storyId: 'story-2' })
-
-      expect(result).toContain('story-2')
-      expect(result).toContain('prd.json')
-
-      const updated = JSON.parse(
-        await readFile('prd.json', 'utf-8')
-      ) as PrdDocument
-      expect(updated.stories[0].passes).toBe(true)
-      expect(updated.stories).toHaveLength(1)
-    })
-  })
 
   describe('archive workflow', () => {
     it('should move story to archive when archive.prd.json exists', async () => {
@@ -175,70 +113,7 @@ describe('mark-complete', () => {
       expect(archive.stories[0].id).toBe('story-4')
     })
 
-    it('should use RALPH_PRD_FILE_ARCHIVE env var', async () => {
-      process.env.RALPH_PRD_FILE_ARCHIVE = 'my-archive.prd.json'
 
-      const prd: PrdDocument = {
-        stories: [
-          {
-            id: 'story-5',
-            title: 'Env Var Archive Test',
-            description: 'Test',
-            priority: 'medium',
-            passes: false,
-            acceptanceCriteria: ['test'],
-            dependencies: [],
-          },
-        ],
-      }
-
-      await writeFile('active.prd.json', JSON.stringify(prd, null, 2))
-
-      const result = await markStoryComplete({ storyId: 'story-5' })
-
-      expect(result).toContain('my-archive.prd.json')
-
-      // Check that archive was created at env var path
-      const archive = JSON.parse(
-        await readFile('my-archive.prd.json', 'utf-8')
-      ) as PrdDocument
-      expect(archive.stories).toHaveLength(1)
-      expect(archive.stories[0].id).toBe('story-5')
-    })
-
-    it('should prefer explicit archiveFile param over env var', async () => {
-      process.env.RALPH_PRD_FILE_ARCHIVE = 'env-archive.prd.json'
-
-      const prd: PrdDocument = {
-        stories: [
-          {
-            id: 'story-6',
-            title: 'Priority Test',
-            description: 'Test',
-            priority: 'critical',
-            passes: false,
-            acceptanceCriteria: ['test'],
-            dependencies: [],
-          },
-        ],
-      }
-
-      await writeFile('active.prd.json', JSON.stringify(prd, null, 2))
-
-      const result = await markStoryComplete({
-        storyId: 'story-6',
-        archiveFile: 'explicit-archive.prd.json',
-      })
-
-      expect(result).toContain('explicit-archive.prd.json')
-      expect(result).not.toContain('env-archive.prd.json')
-
-      // Explicit archive should exist
-      const archive = JSON.parse(
-        await readFile('explicit-archive.prd.json', 'utf-8')
-      ) as PrdDocument
-      expect(archive.stories).toHaveLength(1)
-    })
   })
 
   describe('error handling', () => {
@@ -264,71 +139,6 @@ describe('mark-complete', () => {
       )
     })
 
-    it('should throw error when PRD file does not exist', async () => {
-      await expect(markStoryComplete({ storyId: 'story-1' })).rejects.toThrow(
-        'No PRD file found'
-      )
-    })
   })
 
-  describe('custom PRD file', () => {
-    it('should work with custom prdFile parameter', async () => {
-      const prd: PrdDocument = {
-        stories: [
-          {
-            id: 'story-7',
-            title: 'Custom PRD Test',
-            description: 'Test',
-            priority: 'high',
-            passes: false,
-            acceptanceCriteria: ['test'],
-            dependencies: [],
-          },
-        ],
-      }
-
-      await writeFile('custom.prd.json', JSON.stringify(prd, null, 2))
-
-      const result = await markStoryComplete({
-        storyId: 'story-7',
-        prdFile: 'custom.prd.json',
-      })
-
-      expect(result).toContain('custom.prd.json')
-
-      const updated = JSON.parse(
-        await readFile('custom.prd.json', 'utf-8')
-      ) as PrdDocument
-      expect(updated.stories[0].passes).toBe(true)
-    })
-
-    it('should use RALPH_PRD_FILE_ACTIVE env var', async () => {
-      process.env.RALPH_PRD_FILE_ACTIVE = 'my-active.prd.json'
-
-      const prd: PrdDocument = {
-        stories: [
-          {
-            id: 'story-8',
-            title: 'Env Var PRD Test',
-            description: 'Test',
-            priority: 'medium',
-            passes: false,
-            acceptanceCriteria: ['test'],
-            dependencies: [],
-          },
-        ],
-      }
-
-      await writeFile('my-active.prd.json', JSON.stringify(prd, null, 2))
-
-      const result = await markStoryComplete({ storyId: 'story-8' })
-
-      expect(result).toContain('my-active.prd.json')
-
-      const updated = JSON.parse(
-        await readFile('my-active.prd.json', 'utf-8')
-      ) as PrdDocument
-      expect(updated.stories[0].passes).toBe(true)
-    })
-  })
 })

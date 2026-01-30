@@ -109,20 +109,5 @@ describe('record-failure', () => {
       ).rejects.toThrow("Story 'nonexistent' not found")
     })
 
-    it('should use specified PRD file', async () => {
-      const testDir = process.cwd()
-      const prdPath = await createTestPrd(testDir, 'custom.prd.json', {
-        stories: [sampleStories.high],
-      })
-
-      await recordStoryFailure({
-        storyId: 'story-2',
-        contextFilePath: 'progress/story-2_failure.md',
-        prdFile: 'custom.prd.json',
-      })
-
-      const prd = await readTestPrd(prdPath)
-      expect(prd.stories[0].attempts).toHaveLength(1)
-    })
   })
 })

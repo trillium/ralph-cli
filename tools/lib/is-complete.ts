@@ -7,22 +7,20 @@ import { resolvePrdFile, readPrdFile } from './prd-utils'
 /**
  * Check if all stories in the PRD are complete
  *
- * @param prdFile - Optional PRD file path
  * @returns JSON string with completion status and detailed breakdown
  *
  * @example
  * ```typescript
- * const result = await checkIsComplete({ prdFile: 'active.prd.json' })
  * const parsed = JSON.parse(result)
  * console.log(parsed.complete) // true or false
  * console.log(parsed.summary)  // "3 of 10 stories complete (2 blocked, 5 remaining)"
  * ```
  */
 export async function checkIsComplete(options: {
-  prdFile?: string
+
 }): Promise<string> {
   try {
-    const prdPath = await resolvePrdFile({ prdFile: options.prdFile })
+    const prdPath = await resolvePrdFile()
     const prd = await readPrdFile(prdPath)
 
     // Gather detailed statistics

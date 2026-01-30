@@ -27,13 +27,3 @@ export interface PrdDocument {
   description?: string
   stories: Story[]
 }
-
-export interface PrdFileResolutionOptions {
-  prdFile?: string
-  throwOnNotFound?: boolean
-}
-
-export interface ArchiveFileResolutionOptions {
-  archiveFile?: string
-  throwOnNotFound?: boolean
-}

@@ -8,14 +8,12 @@ import { resolvePrdFile, readPrdFile, findStoryById } from './prd-utils'
  * Get list of previous attempt file paths for a specific story
  *
  * @param storyId - Story ID to get attempts for
- * @param prdFile - Optional PRD file path
  * @returns JSON string with attempts array and metadata
  *
  * @example
  * ```typescript
  * const result = await getStoryAttempts({
  *   storyId: 'story-30',
- *   prdFile: 'active.prd.json'
  * })
  * const parsed = JSON.parse(result)
  * if (parsed.found) {
@@ -26,10 +24,10 @@ import { resolvePrdFile, readPrdFile, findStoryById } from './prd-utils'
  */
 export async function getStoryAttempts(options: {
   storyId: string
-  prdFile?: string
+
 }): Promise<string> {
   try {
-    const prdPath = await resolvePrdFile({ prdFile: options.prdFile })
+    const prdPath = await resolvePrdFile()
     const prd = await readPrdFile(prdPath)
 
     const story = findStoryById(prd, options.storyId)

@@ -29,12 +29,7 @@ const PRIORITY_ORDER: Record<Priority, number> = {
  */
 async function isStoryInArchive(storyId: string): Promise<boolean> {
   try {
-    const archivePath = await resolveArchiveFile({})
-    if (!archivePath) {
-      // No archive file exists
-      return false
-    }
-
+    const archivePath = await resolveArchiveFile()
     const archivePrd = await readPrdFile(archivePath)
     const archivedStory = findStoryById(archivePrd, storyId)
 
@@ -92,12 +87,11 @@ async function areDependenciesSatisfied(
  * 4. Sort by priority (critical > high > medium > low)
  * 5. Return first match with FULL details including attempts
  *
- * @param prdFile - Optional PRD file path
  * @returns JSON string with story details or status object
  *
  * @example
  * ```typescript
- * const next = await findNextStory({ prdFile: 'active.prd.json' })
+ * const next = await findNextStory()
  * const result = JSON.parse(next)
  * if (result.available) {
  *   console.log(result.story.id)              // "story-1"
@@ -107,11 +101,9 @@ async function areDependenciesSatisfied(
  * }
  * ```
  */
-export async function findNextStory(options: {
-  prdFile?: string
-}): Promise<string> {
+export async function findNextStory(): Promise<string> {
   try {
-    const prdPath = await resolvePrdFile({ prdFile: options.prdFile })
+    const prdPath = await resolvePrdFile()
     const prd = await readPrdFile(prdPath)
 
     // Gather statistics for better diagnostics

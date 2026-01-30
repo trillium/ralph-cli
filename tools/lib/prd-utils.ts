@@ -1,169 +1,41 @@
 /**
  * Shared utilities for PRD file operations
- * Provides intelligent file resolution, reading, and writing with atomic operations
+ * Simple, opinionated approach: always use active.prd.json and archive.prd.json
  */
 
 import { promises as fs } from 'fs'
 import path from 'path'
-import type {
-  PrdDocument,
-  PrdFileResolutionOptions,
-  ArchiveFileResolutionOptions,
-} from './types'
+import type { PrdDocument } from './types'
+import { ACTIVE_PRD_FILE, ARCHIVE_PRD_FILE } from './config'
 
 /**
- * Resolve PRD file path with intelligent fallback
- * Priority: explicit param > RALPH_PRD_FILE_ACTIVE env var > active.prd.json > prd.json
+ * Resolve PRD file path
+ * Always returns active.prd.json in current directory
  *
- * @param options - Resolution options
- * @returns Full path to the PRD file
- * @throws Error if no valid PRD file is found
+ * @returns Full path to active.prd.json
  *
  * @example
  * ```typescript
- * // Use explicit file
- * const path = await resolvePrdFile({ prdFile: 'active.prd.json' })
- *
- * // Use environment variable or auto-detect
- * const path = await resolvePrdFile({})
+ * const path = await resolvePrdFile()
  * ```
  */
-export async function resolvePrdFile(
-  options: PrdFileResolutionOptions = {}
-): Promise<string> {
-  const { prdFile, throwOnNotFound = true } = options
-
-  // Priority 1: Explicit parameter
-  if (prdFile) {
-    const fullPath = path.join(process.cwd(), prdFile)
-    try {
-      await fs.access(fullPath)
-      return fullPath
-    } catch {
-      if (throwOnNotFound) {
-        throw new Error(`Specified PRD file not found: ${prdFile}`)
-      }
-      throw new Error(`PRD file not accessible: ${prdFile}`)
-    }
-  }
-
-  // Priority 2: RALPH_PRD_FILE_ACTIVE environment variable (new)
-  if (process.env.RALPH_PRD_FILE_ACTIVE) {
-    const fullPath = path.join(process.cwd(), process.env.RALPH_PRD_FILE_ACTIVE)
-    try {
-      await fs.access(fullPath)
-      return fullPath
-    } catch {
-      if (throwOnNotFound) {
-        throw new Error(
-          `RALPH_PRD_FILE_ACTIVE not found: ${process.env.RALPH_PRD_FILE_ACTIVE}`
-        )
-      }
-      // Fall through to auto-detection
-    }
-  }
-
-  // Priority 3: RALPH_PRD_FILE environment variable (legacy, for backward compatibility)
-  if (process.env.RALPH_PRD_FILE) {
-    const fullPath = path.join(process.cwd(), process.env.RALPH_PRD_FILE)
-    try {
-      await fs.access(fullPath)
-      return fullPath
-    } catch {
-      if (throwOnNotFound) {
-        throw new Error(
-          `RALPH_PRD_FILE not found: ${process.env.RALPH_PRD_FILE}`
-        )
-      }
-      // Fall through to auto-detection
-    }
-  }
-
-  // Priority 4: active.prd.json (modern workflow)
-  const activePath = path.join(process.cwd(), 'active.prd.json')
-  try {
-    await fs.access(activePath)
-    return activePath
-  } catch {
-    // Fall through to legacy
-  }
-
-  // Priority 5: prd.json (legacy)
-  const legacyPath = path.join(process.cwd(), 'prd.json')
-  try {
-    await fs.access(legacyPath)
-    return legacyPath
-  } catch {
-    if (throwOnNotFound) {
-      throw new Error(
-        `No PRD file found. Expected 'active.prd.json' or 'prd.json' in ${process.cwd()}`
-      )
-    }
-    // Return the preferred path even if it doesn't exist
-    return activePath
-  }
+export async function resolvePrdFile(): Promise<string> {
+  return path.join(process.cwd(), ACTIVE_PRD_FILE)
 }
 
 /**
- * Resolve archive file path with intelligent fallback
- * Priority: explicit param > RALPH_PRD_FILE_ARCHIVE env var > archive.prd.json
+ * Resolve archive file path
+ * Always returns archive.prd.json in current directory
  *
- * @param options - Resolution options
- * @returns Full path to the archive file, or null if no archive workflow is configured
+ * @returns Full path to archive.prd.json
  *
  * @example
  * ```typescript
- * // Use explicit file
- * const path = await resolveArchiveFile({ archiveFile: 'archive.prd.json' })
- *
- * // Use environment variable or auto-detect
- * const path = await resolveArchiveFile({})
+ * const path = await resolveArchiveFile()
  * ```
  */
-export async function resolveArchiveFile(
-  options: ArchiveFileResolutionOptions = {}
-): Promise<string | null> {
-  const { archiveFile, throwOnNotFound = false } = options
-
-  // Priority 1: Explicit parameter
-  if (archiveFile) {
-    const fullPath = path.join(process.cwd(), archiveFile)
-    try {
-      await fs.access(fullPath)
-      return fullPath
-    } catch {
-      if (throwOnNotFound) {
-        throw new Error(`Specified archive file not found: ${archiveFile}`)
-      }
-      // Return path even if it doesn't exist yet (will be created)
-      return fullPath
-    }
-  }
-
-  // Priority 2: RALPH_PRD_FILE_ARCHIVE environment variable
-  if (process.env.RALPH_PRD_FILE_ARCHIVE) {
-    const fullPath = path.join(
-      process.cwd(),
-      process.env.RALPH_PRD_FILE_ARCHIVE
-    )
-    try {
-      await fs.access(fullPath)
-      return fullPath
-    } catch {
-      // Return path even if it doesn't exist yet (will be created)
-      return fullPath
-    }
-  }
-
-  // Priority 3: Auto-detect archive.prd.json if it exists
-  const defaultArchivePath = path.join(process.cwd(), 'archive.prd.json')
-  try {
-    await fs.access(defaultArchivePath)
-    return defaultArchivePath
-  } catch {
-    // No archive file found - return null to indicate no archive workflow
-    return null
-  }
+export async function resolveArchiveFile(): Promise<string> {
+  return path.join(process.cwd(), ARCHIVE_PRD_FILE)
 }
 
 /**
@@ -175,7 +47,7 @@ export async function resolveArchiveFile(
  *
  * @example
  * ```typescript
- * const prdPath = await resolvePrdFile({})
+ * const prdPath = await resolvePrdFile()
  * const prd = await readPrdFile(prdPath)
  * console.log(prd.stories.length)
  * ```

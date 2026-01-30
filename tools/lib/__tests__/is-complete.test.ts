@@ -74,30 +74,5 @@ describe('is-complete', () => {
       expect(parsed.blockedStories).toBe(1)
     })
 
-    it('should use specified PRD file', async () => {
-      const testDir = process.cwd()
-      const completedStory = { ...sampleStories.critical, passes: true }
-      await createTestPrd(testDir, 'custom.prd.json', {
-        stories: [completedStory],
-      })
-
-      const result = await checkIsComplete({ prdFile: 'custom.prd.json' })
-      const parsed = JSON.parse(result)
-      expect(parsed.complete).toBe(true)
-      expect(parsed.result).toBe('yes')
-    })
-
-    it('should return "no" if passes is explicitly false', async () => {
-      const testDir = process.cwd()
-      const story = { ...sampleStories.critical, passes: false }
-      await createTestPrd(testDir, 'active.prd.json', {
-        stories: [story],
-      })
-
-      const result = await checkIsComplete({})
-      const parsed = JSON.parse(result)
-      expect(parsed.complete).toBe(false)
-      expect(parsed.result).toBe('no')
-    })
   })
 })

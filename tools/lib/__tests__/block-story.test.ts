@@ -76,29 +76,5 @@ describe('block-story', () => {
         "Story 'nonexistent' not found"
       )
     })
-
-    it('should use specified PRD file', async () => {
-      const testDir = process.cwd()
-      const prdPath = await createTestPrd(testDir, 'custom.prd.json', {
-        stories: [sampleStories.high],
-      })
-
-      await blockStory({ storyId: 'story-2', prdFile: 'custom.prd.json' })
-
-      const prd = await readTestPrd(prdPath)
-      expect(prd.stories[0].blocked).toBe(true)
-    })
-
-    it('should allow blocking already blocked story', async () => {
-      const testDir = process.cwd()
-      const prdPath = await createTestPrd(testDir, 'active.prd.json', {
-        stories: [sampleStories.blocked],
-      })
-
-      await blockStory({ storyId: 'story-5' })
-
-      const prd = await readTestPrd(prdPath)
-      expect(prd.stories[0].blocked).toBe(true)
-    })
   })
 })

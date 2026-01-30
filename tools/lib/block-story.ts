@@ -14,7 +14,6 @@ import {
  * Sets blocked=true and adds a timestamp
  *
  * @param storyId - Story ID to block
- * @param prdFile - Optional PRD file path
  * @returns Success message
  * @throws Error if story is not found
  *
@@ -22,15 +21,14 @@ import {
  * ```typescript
  * await blockStory({
  *   storyId: 'story-30',
- *   prdFile: 'active.prd.json'
  * })
  * ```
  */
 export async function blockStory(options: {
   storyId: string
-  prdFile?: string
+
 }): Promise<string> {
-  const prdPath = await resolvePrdFile({ prdFile: options.prdFile })
+  const prdPath = await resolvePrdFile()
   const prd = await readPrdFile(prdPath)
 
   const story = findStoryById(prd, options.storyId)

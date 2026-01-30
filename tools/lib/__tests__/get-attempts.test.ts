@@ -69,24 +69,5 @@ describe('get-attempts', () => {
       expect(parsed.error).toContain("Story 'nonexistent' not found")
     })
 
-    it('should use specified PRD file', async () => {
-      const testDir = process.cwd()
-      const storyWithAttempts = {
-        ...sampleStories.high,
-        attempts: ['progress/story-2_attempt1.md'],
-      }
-      await createTestPrd(testDir, 'custom.prd.json', {
-        stories: [storyWithAttempts],
-      })
-
-      const result = await getStoryAttempts({
-        storyId: 'story-2',
-        prdFile: 'custom.prd.json',
-      })
-      const parsed = JSON.parse(result)
-
-      expect(parsed.found).toBe(true)
-      expect(parsed.attempts).toEqual(['progress/story-2_attempt1.md'])
-    })
   })
 })

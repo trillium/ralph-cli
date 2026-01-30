@@ -1,5 +1,6 @@
 /**
  * Tests for prd-utils.ts
+ * Simplified - always uses active.prd.json and archive.prd.json
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
@@ -7,6 +8,7 @@ import { promises as fs } from 'fs'
 import path from 'path'
 import {
   resolvePrdFile,
+  resolveArchiveFile,
   readPrdFile,
   writePrdFile,
   findStoryById,
@@ -28,58 +30,21 @@ describe('prd-utils', () => {
 
   afterEach(async () => {
     await testEnv.cleanup()
-    delete process.env.RALPH_PRD_FILE
   })
 
   describe('resolvePrdFile', () => {
-    it('should use explicit prdFile parameter first', async () => {
+    it('should always return active.prd.json', async () => {
       const testDir = process.cwd()
-      await createTestPrd(testDir, 'custom.prd.json', { stories: [] })
-      await createTestPrd(testDir, 'active.prd.json', { stories: [] })
-      await createTestPrd(testDir, 'prd.json', { stories: [] })
-
-      const resolved = await resolvePrdFile({ prdFile: 'custom.prd.json' })
-      expect(resolved).toBe(path.join(testDir, 'custom.prd.json'))
-    })
-
-    it('should use RALPH_PRD_FILE environment variable second', async () => {
-      const testDir = process.cwd()
-      await createTestPrd(testDir, 'env.prd.json', { stories: [] })
-      await createTestPrd(testDir, 'active.prd.json', { stories: [] })
-
-      process.env.RALPH_PRD_FILE = 'env.prd.json'
-
-      const resolved = await resolvePrdFile({})
-      expect(resolved).toBe(path.join(testDir, 'env.prd.json'))
-    })
-
-    it('should auto-detect active.prd.json third', async () => {
-      const testDir = process.cwd()
-      await createTestPrd(testDir, 'active.prd.json', { stories: [] })
-      await createTestPrd(testDir, 'prd.json', { stories: [] })
-
-      const resolved = await resolvePrdFile({})
+      const resolved = await resolvePrdFile()
       expect(resolved).toBe(path.join(testDir, 'active.prd.json'))
     })
+  })
 
-    it('should fallback to prd.json fourth', async () => {
+  describe('resolveArchiveFile', () => {
+    it('should always return archive.prd.json', async () => {
       const testDir = process.cwd()
-      await createTestPrd(testDir, 'prd.json', { stories: [] })
-
-      const resolved = await resolvePrdFile({})
-      expect(resolved).toBe(path.join(testDir, 'prd.json'))
-    })
-
-    it('should throw error if specified file not found', async () => {
-      await expect(
-        resolvePrdFile({ prdFile: 'nonexistent.json' })
-      ).rejects.toThrow('Specified PRD file not found: nonexistent.json')
-    })
-
-    it('should throw error if no PRD file found', async () => {
-      await expect(resolvePrdFile({})).rejects.toThrow(
-        'No PRD file found. Expected'
-      )
+      const resolved = await resolveArchiveFile()
+      expect(resolved).toBe(path.join(testDir, 'archive.prd.json'))
     })
   })
 

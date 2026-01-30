@@ -15,7 +15,6 @@ import {
  *
  * @param storyId - Story ID
  * @param contextFilePath - Path to context dump file
- * @param prdFile - Optional PRD file path
  * @returns Success message
  * @throws Error if story is not found
  *
@@ -24,16 +23,15 @@ import {
  * await recordStoryFailure({
  *   storyId: 'story-30',
  *   contextFilePath: 'progress/story-30_2026-01-26_143022_issue.md',
- *   prdFile: 'active.prd.json'
  * })
  * ```
  */
 export async function recordStoryFailure(options: {
   storyId: string
   contextFilePath: string
-  prdFile?: string
+
 }): Promise<string> {
-  const prdPath = await resolvePrdFile({ prdFile: options.prdFile })
+  const prdPath = await resolvePrdFile()
   const prd = await readPrdFile(prdPath)
 
   const story = findStoryById(prd, options.storyId)
