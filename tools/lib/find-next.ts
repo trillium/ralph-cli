@@ -10,6 +10,7 @@ import {
   tryReadPrdFile,
   findStoryById,
 } from './prd-utils'
+import { loadConfig, clearConfigCache } from './config'
 
 /**
  * Priority ordering for story selection
@@ -123,6 +124,11 @@ async function areDependenciesSatisfied(
  */
 export async function findNextStory(): Promise<string> {
   try {
+    // Clear config cache to ensure fresh read each time
+    clearConfigCache()
+
+    const cwd = process.cwd()
+    const config = loadConfig(cwd)
     const prdPaths = getAllPrdPaths()
 
     // Load all PRDs that exist
@@ -141,6 +147,11 @@ export async function findNextStory(): Promise<string> {
           reason: 'no_prd_files',
           message: 'No PRD files found. Create at least one PRD file to get started.',
           checkedPaths: prdPaths.map((p) => p.active),
+          _debug: {
+            cwd,
+            configHierarchy: config.hierarchy,
+            prdFiles: prdPaths.map((p) => ({ type: p.type, active: p.active })),
+          },
         },
         null,
         2
@@ -200,6 +211,11 @@ export async function findNextStory(): Promise<string> {
               attemptCount: attempts.length,
               previousAttempts: attempts,
             },
+            _debug: {
+              cwd,
+              configHierarchy: config.hierarchy,
+              prdFiles: prdPaths.map((p) => ({ type: p.type, active: p.active })),
+            },
           },
           null,
           2
@@ -239,6 +255,11 @@ export async function findNextStory(): Promise<string> {
             : waitingOnDeps > 0
               ? `${waitingOnDeps} incomplete stories are waiting on dependencies`
               : 'No available stories to work on',
+        _debug: {
+          cwd,
+          configHierarchy: config.hierarchy,
+          prdFiles: prdPaths.map((p) => ({ type: p.type, active: p.active })),
+        },
       },
       null,
       2
