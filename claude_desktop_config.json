@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "ralph-cli": {
+      "command": "node",
+      "args": ["tools/mcp-server.ts"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}

@@ -4,9 +4,13 @@
   "description": "Ralph CLI - Autonomous Development Loop System",
   "type": "module",
   "main": "tools/ralph.ts",
+  "bin": {
+    "ralph-mcp": "./tools/mcp-server.ts"
+  },
   "exports": {
     ".": "./tools/ralph.ts",
     "./tools/ralph": "./tools/ralph.ts",
+    "./mcp-server": "./tools/mcp-server.ts",
     "./agents/*": "./agents/*",
     "./commands/*": "./commands/*"
   },
@@ -55,6 +59,8 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@opencode-ai/plugin": "^1.1.40"
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@opencode-ai/plugin": "^1.1.40",
+    "zod": "^3.25.1"
   }
 }
