@@ -19,6 +19,49 @@ const __dirname = dirname(__filename)
 const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'))
 const VERSION = packageJson.version
 
+// Handle --help flag
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(`
+ralph-mcp v${VERSION}
+
+Ralph CLI MCP Server - Exposes story management tools via Model Context Protocol
+
+USAGE:
+  ralph-mcp [OPTIONS]
+
+OPTIONS:
+  -h, --help      Show this help message
+  -v, --version   Show version number
+
+CONFIGURATION:
+  Create a ralph.config.json in your repository root:
+
+  {
+    "$schema": "https://raw.githubusercontent.com/trillium/ralph-cli/main/ralph.config.schema.json",
+    "activePrdFile": "active.prd.json",
+    "archivePrdFile": "archive.prd.json"
+  }
+
+AVAILABLE TOOLS:
+  ralph_findNext       Find the next available story to work on
+  ralph_getDetails     Get full details for a specific story
+  ralph_getAttempts    Get previous attempt files for a story
+  ralph_markComplete   Mark a story as complete
+  ralph_recordFailure  Record a failed attempt
+  ralph_blockStory     Block a story after too many failures
+  ralph_isComplete     Check if all stories are done
+  ralph_createProgress Create a progress file for an attempt
+  ralph_createFailure  Quick error documentation
+  ralph_error          Create a GitHub issue for errors
+  ralph_suggest        Create a GitHub issue for suggestions
+  ralph_addPrd         Add a new story to the PRD
+
+DOCUMENTATION:
+  https://github.com/trillium/ralph-cli
+`.trim())
+  process.exit(0)
+}
+
 // Handle --version flag
 if (process.argv.includes('--version') || process.argv.includes('-v')) {
   console.log(VERSION)
