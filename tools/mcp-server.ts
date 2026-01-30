@@ -36,6 +36,7 @@ import { createProgressFile } from './lib/create-progress.js'
 import { createFailureDocument } from './lib/create-failure.js'
 import { createErrorIssue } from './lib/create-error.js'
 import { createSuggestionIssue } from './lib/create-suggestion.js'
+import { getSetupAdvice, validateConfig } from './lib/setup-advice.js'
 import { markStoryComplete } from './lib/mark-complete.js'
 import type { ProgressOptions } from './lib/create-progress.js'
 import { resolvePrdFile, readPrdFile, writePrdFile, findStoryById, resolveArchiveFile } from './lib/prd-utils.js'
@@ -58,6 +59,14 @@ const server = new Server(
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
+      {
+        name: 'ralph_setupAdvice',
+        description: 'Get setup instructions for configuring a repository to use Ralph CLI. Shows current configuration status and provides step-by-step setup guide. Call this first if you are unsure how to use Ralph CLI.',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+        },
+      },
       {
         name: 'ralph_findNext',
         description: 'Find the next available story to work on (respects dependencies and priority). Returns full story details including attemptCount and previousAttempts array.',
@@ -383,7 +392,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
+      case 'ralph_setupAdvice': {
+        const result = await getSetupAdvice()
+        return {
+          content: [{ type: 'text', text: result }],
+        }
+      }
+
       case 'ralph_findNext': {
+        validateConfig()
         const result = await findNextStory({ prdFile: args?.prdFile as string | undefined })
         return {
           content: [{ type: 'text', text: result }],
@@ -391,6 +408,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'ralph_getDetails': {
+        validateConfig()
         const result = await getStoryDetails({
           storyId: args.storyId as string,
           prdFile: args?.prdFile as string | undefined,
@@ -401,6 +419,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'ralph_getAttempts': {
+        validateConfig()
         const result = await getStoryAttempts({
           storyId: args.storyId as string,
           prdFile: args?.prdFile as string | undefined,
@@ -411,6 +430,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'ralph_markComplete': {
+        validateConfig()
         const result = await markStoryComplete({
           storyId: args.storyId as string,
           prdFile: args?.prdFile as string | undefined,
@@ -422,6 +442,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'ralph_recordFailure': {
+        validateConfig()
         const result = await recordStoryFailure({
           storyId: args.storyId as string,
           contextFilePath: args.contextFilePath as string,
@@ -433,6 +454,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'ralph_blockStory': {
+        validateConfig()
         const result = await blockStoryImpl({
           storyId: args.storyId as string,
           prdFile: args?.prdFile as string | undefined,
@@ -443,6 +465,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'ralph_isComplete': {
+        validateConfig()
         const result = await checkIsComplete({ prdFile: args?.prdFile as string | undefined })
         return {
           content: [{ type: 'text', text: result }],
@@ -508,6 +531,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'ralph_addPrd': {
+        validateConfig()
         // Determine PRD file path
         const prdPath = await resolvePrdFile({ prdFile: args?.prdFile as string | undefined })
         const prd = await readPrdFile(prdPath)
