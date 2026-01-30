@@ -1,41 +1,120 @@
 /**
  * Shared utilities for PRD file operations
- * Simple, opinionated approach: always use active.prd.json and archive.prd.json
+ * Supports multiple PRD types with hierarchy-based selection
  */
 
 import { promises as fs } from 'fs'
 import path from 'path'
 import type { PrdDocument } from './types'
-import { ACTIVE_PRD_FILE, ARCHIVE_PRD_FILE } from './config'
+import {
+  loadConfig,
+  getPrdFilesForType,
+  getHierarchy,
+  ACTIVE_PRD_FILE,
+  ARCHIVE_PRD_FILE,
+} from './config'
 
-/**
- * Resolve PRD file path
- * Always returns active.prd.json in current directory
- *
- * @returns Full path to active.prd.json
- *
- * @example
- * ```typescript
- * const path = await resolvePrdFile()
- * ```
- */
-export async function resolvePrdFile(): Promise<string> {
-  return path.join(process.cwd(), ACTIVE_PRD_FILE)
+export interface ResolvePrdOptions {
+  prdFile?: string
+  prdType?: string
 }
 
 /**
- * Resolve archive file path
- * Always returns archive.prd.json in current directory
+ * Resolve PRD file path for a specific type
  *
- * @returns Full path to archive.prd.json
+ * @param options - Options including prdFile override or prdType
+ * @returns Full path to the active PRD file
  *
  * @example
  * ```typescript
- * const path = await resolveArchiveFile()
+ * // Use default type
+ * const path = await resolvePrdFile()
+ *
+ * // Use specific type
+ * const featurePath = await resolvePrdFile({ prdType: 'feature' })
+ *
+ * // Use explicit file
+ * const customPath = await resolvePrdFile({ prdFile: 'custom.prd.json' })
  * ```
  */
-export async function resolveArchiveFile(): Promise<string> {
-  return path.join(process.cwd(), ARCHIVE_PRD_FILE)
+export async function resolvePrdFile(options: ResolvePrdOptions = {}): Promise<string> {
+  const cwd = process.cwd()
+
+  // Explicit file override takes precedence
+  if (options.prdFile) {
+    return path.join(cwd, options.prdFile)
+  }
+
+  // Use specific type if provided
+  if (options.prdType) {
+    const typeConfig = getPrdFilesForType(options.prdType, cwd)
+    return path.join(cwd, typeConfig.active)
+  }
+
+  // Default: use first type in hierarchy
+  const hierarchy = getHierarchy(cwd)
+  if (hierarchy.length > 0) {
+    const typeConfig = getPrdFilesForType(hierarchy[0], cwd)
+    return path.join(cwd, typeConfig.active)
+  }
+
+  // Fallback to default
+  return path.join(cwd, ACTIVE_PRD_FILE)
+}
+
+/**
+ * Resolve archive file path for a specific type
+ *
+ * @param options - Options including prdType
+ * @returns Full path to the archive PRD file
+ *
+ * @example
+ * ```typescript
+ * // Use default type
+ * const path = await resolveArchiveFile()
+ *
+ * // Use specific type
+ * const featurePath = await resolveArchiveFile({ prdType: 'feature' })
+ * ```
+ */
+export async function resolveArchiveFile(options: ResolvePrdOptions = {}): Promise<string> {
+  const cwd = process.cwd()
+
+  // Use specific type if provided
+  if (options.prdType) {
+    const typeConfig = getPrdFilesForType(options.prdType, cwd)
+    return path.join(cwd, typeConfig.archive)
+  }
+
+  // Default: use first type in hierarchy
+  const hierarchy = getHierarchy(cwd)
+  if (hierarchy.length > 0) {
+    const typeConfig = getPrdFilesForType(hierarchy[0], cwd)
+    return path.join(cwd, typeConfig.archive)
+  }
+
+  // Fallback to default
+  return path.join(cwd, ARCHIVE_PRD_FILE)
+}
+
+/**
+ * Get all PRD file paths across all types in hierarchy order
+ *
+ * @returns Array of { type, active, archive } objects in hierarchy order
+ */
+export function getAllPrdPaths(): Array<{ type: string; active: string; archive: string }> {
+  const cwd = process.cwd()
+  const config = loadConfig(cwd)
+  const hierarchy = config.hierarchy
+
+  return hierarchy.map((type) => {
+    const typeConfig = config.prdTypes[type]
+    return {
+      type,
+      active: path.join(cwd, typeConfig.active),
+      archive: path.join(cwd, typeConfig.archive),
+    }
+  })
 }
 
 /**
@@ -77,6 +156,23 @@ export async function readPrdFile(prdPath: string): Promise<PrdDocument> {
       throw new Error(`PRD file not found: ${prdPath}`)
     }
     // Re-throw our custom errors or any other errors
+    throw error
+  }
+}
+
+/**
+ * Try to read a PRD file, returning null if it doesn't exist
+ *
+ * @param prdPath - Full path to the PRD file
+ * @returns Parsed PRD document or null if file doesn't exist
+ */
+export async function tryReadPrdFile(prdPath: string): Promise<PrdDocument | null> {
+  try {
+    return await readPrdFile(prdPath)
+  } catch (error: any) {
+    if (error.message.includes('not found')) {
+      return null
+    }
     throw error
   }
 }

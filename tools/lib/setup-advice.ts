@@ -87,19 +87,50 @@ ${setupComplete ? '✅ Repository is properly configured!' : '⚠️  Setup inco
 
 ### Step 1: Create ralph.config.json
 
-Create a \`ralph.config.json\` file in your repository root:
+Create a \`ralph.config.json\` file in your repository root.
 
+**Simple config (single PRD):**
 \`\`\`json
 {
   "$schema": "https://raw.githubusercontent.com/trillium/ralph-cli/main/ralph.config.schema.json",
-  "activePrdFile": "active.prd.json",
-  "archivePrdFile": "archive.prd.json"
+  "prdTypes": {
+    "default": {
+      "active": "active.prd.json",
+      "archive": "archive.prd.json"
+    }
+  },
+  "hierarchy": ["default"]
 }
 \`\`\`
 
-### Step 2: Create your PRD file
+**Multi-type config (multiple PRD buckets):**
+\`\`\`json
+{
+  "$schema": "https://raw.githubusercontent.com/trillium/ralph-cli/main/ralph.config.schema.json",
+  "prdTypes": {
+    "default": {
+      "active": "active.prd.json",
+      "archive": "archive.prd.json"
+    },
+    "feature": {
+      "active": "feature.active.prd.json",
+      "archive": "feature.archive.prd.json"
+    },
+    "explore": {
+      "active": "explore.active.prd.json",
+      "archive": "explore.archive.prd.json"
+    }
+  },
+  "hierarchy": ["default", "feature", "explore"]
+}
+\`\`\`
 
-Create an \`active.prd.json\` file with your stories:
+The **hierarchy** array determines the order in which PRD types are checked.
+Stories from "default" will be worked on first, then "feature", then "explore".
+
+### Step 2: Create your PRD file(s)
+
+Create PRD files for each type defined in your config:
 
 \`\`\`json
 {
@@ -121,9 +152,9 @@ Create an \`active.prd.json\` file with your stories:
 }
 \`\`\`
 
-### Step 3: (Optional) Create archive.prd.json
+### Step 3: (Optional) Create archive files
 
-Create an \`archive.prd.json\` for completed stories:
+Create archive files for completed stories (one per PRD type):
 
 \`\`\`json
 {
