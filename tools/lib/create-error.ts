@@ -1,9 +1,17 @@
 /**
  * Create a GitHub issue for an error encountered during story execution
  * Uses gh CLI to automatically spawn an issue in the repository
+ * Automatically includes diagnostic info for debugging
  */
 
 import { execSync } from 'child_process'
+import { existsSync, readFileSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+import { loadConfig, clearConfigCache } from './config'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 export interface CreateErrorOptions {
   storyId: string
@@ -13,12 +21,80 @@ export interface CreateErrorOptions {
 }
 
 /**
+ * Get the ralph-cli version from package.json
+ */
+function getVersion(): string {
+  try {
+    const packagePath = join(__dirname, '..', '..', 'package.json')
+    const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'))
+    return packageJson.version || 'unknown'
+  } catch {
+    return 'unknown'
+  }
+}
+
+/**
+ * Get diagnostic info for debugging
+ */
+function getDiagnostics(): string {
+  const cwd = process.cwd()
+  const version = getVersion()
+  const configPath = join(cwd, 'ralph.config.json')
+  const configExists = existsSync(configPath)
+
+  let diagnostics = `## Diagnostics
+
+**ralph-cli version:** ${version}
+**Working directory:** ${cwd}
+**ralph.config.json exists:** ${configExists}
+`
+
+  if (configExists) {
+    try {
+      const configContent = readFileSync(configPath, 'utf-8')
+      diagnostics += `
+**ralph.config.json contents:**
+\`\`\`json
+${configContent}
+\`\`\`
+`
+    } catch (e: any) {
+      diagnostics += `\n**Failed to read config:** ${e.message}\n`
+    }
+
+    // Get parsed config
+    try {
+      clearConfigCache()
+      const config = loadConfig(cwd)
+      diagnostics += `
+**Parsed hierarchy:** ${JSON.stringify(config.hierarchy)}
+**Parsed PRD types:**
+\`\`\`json
+${JSON.stringify(config.prdTypes, null, 2)}
+\`\`\`
+`
+    } catch (e: any) {
+      diagnostics += `\n**Failed to parse config:** ${e.message}\n`
+    }
+  } else {
+    diagnostics += `\n_Config file not found - using defaults (active.prd.json, archive.prd.json)_\n`
+  }
+
+  // Check which PRD files exist
+  const prdFiles = ['active.prd.json', 'archive.prd.json']
+  const existingPrds = prdFiles.filter((f) => existsSync(join(cwd, f)))
+  diagnostics += `\n**PRD files found in cwd:** ${existingPrds.length > 0 ? existingPrds.join(', ') : 'none'}\n`
+
+  return diagnostics
+}
+
+/**
  * Create a GitHub issue for an error
  *
  * Automatically creates a GitHub issue using `gh` CLI with:
  * - Repository: Always creates issues in trillium/ralph-cli (regardless of current directory)
  * - Title: "[Story ID] Error: [error summary]"
- * - Body: Formatted markdown with context, what was attempted, and error details
+ * - Body: Formatted markdown with context, what was attempted, error details, and diagnostics
  * - Labels: "bug"
  *
  * @param options - Error details
@@ -49,6 +125,9 @@ export async function createErrorIssue(
     )
   }
 
+  // Gather diagnostics
+  const diagnostics = getDiagnostics()
+
   // Create issue title (truncate error if too long)
   const errorSummary = error.length > 60 ? error.substring(0, 60) + '...' : error
   const title = `[${storyId}] Error: ${errorSummary}`
@@ -67,6 +146,8 @@ ${error}
 ${context ? `**Context:**\n${context}\n` : ''}
 ${attempted ? `**What Was Attempted:**\n${attempted}\n` : ''}
 
+${diagnostics}
+
 ---
 
 _This issue was automatically created by ralph_error()_
@@ -76,7 +157,6 @@ _This issue was automatically created by ralph_error()_
   // Write body to a temp file to avoid shell escaping issues
   const { writeFileSync, unlinkSync } = await import('fs')
   const { tmpdir } = await import('os')
-  const { join } = await import('path')
 
   const tempFile = join(tmpdir(), `ralph-error-${Date.now()}.md`)
 
