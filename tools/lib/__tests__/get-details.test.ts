@@ -3,7 +3,10 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { writeFileSync } from 'fs'
+import { join } from 'path'
 import { getStoryDetails } from '../get-details'
+import { clearConfigCache } from '../config'
 import { useTestDir, createTestPrd, sampleStories } from './test-utils'
 
 describe('get-details', () => {
@@ -107,6 +110,54 @@ describe('get-details', () => {
       const notFoundResult = await getStoryDetails({ storyId: 'story-1', prdFile: 'other.prd.json' })
       const notFoundParsed = JSON.parse(notFoundResult)
       expect(notFoundParsed.found).toBe(false)
+    })
+
+    it('should return didYouMean suggestions when story exists in other configured PRD files', async () => {
+      const testDir = process.cwd()
+
+      // Clear the config cache to ensure our test config is used
+      clearConfigCache()
+
+      // Create a config with multiple PRD types
+      writeFileSync(join(testDir, 'ralph.config.json'), JSON.stringify({
+        prdTypes: {
+          main: {
+            active: 'active.prd.json',
+            archive: 'archive.prd.json',
+          },
+          feature: {
+            active: 'feature.active.prd.json',
+            archive: 'feature.archive.prd.json',
+          },
+        },
+        hierarchy: ['main', 'feature'],
+      }))
+
+      // Create main PRD without the story
+      await createTestPrd(testDir, 'active.prd.json', {
+        stories: [sampleStories.critical],
+      })
+
+      // Create feature PRD with the target story
+      await createTestPrd(testDir, 'feature.active.prd.json', {
+        stories: [{
+          id: 'feature-story-1',
+          title: 'Feature Story',
+          description: 'A feature story',
+          priority: 'high' as const,
+          acceptanceCriteria: ['done'],
+        }],
+      })
+
+      // Search for feature-story-1 in main PRD (won't find it)
+      const result = await getStoryDetails({ storyId: 'feature-story-1' })
+      const parsed = JSON.parse(result)
+
+      expect(parsed.found).toBe(false)
+      expect(parsed.didYouMean).toBeDefined()
+      expect(parsed.didYouMean).toHaveLength(1)
+      expect(parsed.didYouMean[0].prdFile).toBe('feature.active.prd.json')
+      expect(parsed.didYouMean[0].storyTitle).toBe('Feature Story')
     })
 
   })
