@@ -1,0 +1,134 @@
+name: Update Homebrew Formula
+
+on:
+  # Manual trigger with version input
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to update to (leave empty for package.json version)'
+        required: false
+        type: string
+      dry_run:
+        description: 'Dry run (no commit/push)'
+        required: false
+        type: boolean
+        default: false
+
+  # Trigger on release publish
+  release:
+    types: [published]
+
+  # Trigger from release workflow
+  repository_dispatch:
+    types: [update-homebrew]
+
+jobs:
+  update-formula:
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Get version
+      id: version
+      run: |
+        if [[ -n "${{ inputs.version }}" ]]; then
+          VERSION="${{ inputs.version }}"
+        elif [[ "${{ github.event_name }}" == "release" ]]; then
+          # Extract version from release tag (v0.7.4 -> 0.7.4)
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+        elif [[ "${{ github.event_name }}" == "repository_dispatch" ]]; then
+          VERSION="${{ github.event.client_payload.version }}"
+        else
+          VERSION=$(node -p "require('./package.json').version")
+        fi
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Using version: $VERSION"
+
+    - name: Wait for GitHub release to be available
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        URL="https://github.com/${{ github.repository }}/archive/refs/tags/v${VERSION}.tar.gz"
+
+        echo "Checking: $URL"
+
+        for i in {1..10}; do
+          HTTP_STATUS=$(curl -sI -o /dev/null -w "%{http_code}" -L "$URL")
+          if [[ "$HTTP_STATUS" == "200" ]]; then
+            echo "Release tarball available"
+            exit 0
+          fi
+          echo "Attempt $i: HTTP $HTTP_STATUS, waiting..."
+          sleep 5
+        done
+
+        echo "Release tarball not available after 10 attempts"
+        exit 1
+
+    - name: Calculate SHA256
+      id: sha
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        URL="https://github.com/${{ github.repository }}/archive/refs/tags/v${VERSION}.tar.gz"
+
+        SHA256=$(curl -sL "$URL" | shasum -a 256 | cut -d' ' -f1)
+        echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+        echo "SHA256: $SHA256"
+
+    - name: Update formula
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        SHA256="${{ steps.sha.outputs.sha256 }}"
+        URL="https://github.com/${{ github.repository }}/archive/refs/tags/v${VERSION}.tar.gz"
+
+        # Update URL
+        sed -i.bak "s|url \"https://github.com/.*/archive/refs/tags/v.*\.tar\.gz\"|url \"${URL}\"|" Formula/ralph-cli.rb
+
+        # Update SHA256
+        sed -i.bak "s|sha256 \".*\"|sha256 \"${SHA256}\"|" Formula/ralph-cli.rb
+
+        rm -f Formula/ralph-cli.rb.bak
+
+        echo "Updated formula:"
+        cat Formula/ralph-cli.rb
+
+    - name: Run brew audit
+      run: |
+        brew audit --strict Formula/ralph-cli.rb || true
+
+    - name: Commit and push
+      if: ${{ !inputs.dry_run }}
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+        git add Formula/ralph-cli.rb
+        git commit -m "chore: update Homebrew formula to v${VERSION}" || echo "No changes to commit"
+        git push origin HEAD
+
+    - name: Summary
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        SHA256="${{ steps.sha.outputs.sha256 }}"
+
+        echo "## Homebrew Formula Updated" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version:** $VERSION" >> $GITHUB_STEP_SUMMARY
+        echo "- **SHA256:** \`$SHA256\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Install with:" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+        echo "brew tap trillium/ralph-cli https://github.com/trillium/ralph-cli" >> $GITHUB_STEP_SUMMARY
+        echo "brew install ralph-cli" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
