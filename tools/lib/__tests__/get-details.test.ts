@@ -73,5 +73,41 @@ describe('get-details', () => {
       expect(parsed.error).toContain("Story 'nonexistent' not found")
     })
 
+    it('should respect prdFile parameter when explicitly provided', async () => {
+      const testDir = process.cwd()
+      // Create default PRD with one story
+      await createTestPrd(testDir, 'active.prd.json', {
+        stories: [sampleStories.critical],
+      })
+      // Create alternate PRD with a different story
+      await createTestPrd(testDir, 'other.prd.json', {
+        stories: [{
+          id: 'alternate-story',
+          title: 'Alternate Story',
+          description: 'In alternate PRD',
+          priority: 'low' as const,
+          acceptanceCriteria: ['done'],
+        }],
+      })
+
+      // Without prdFile, should find story-1 in default active.prd.json
+      const defaultResult = await getStoryDetails({ storyId: 'story-1' })
+      const defaultParsed = JSON.parse(defaultResult)
+      expect(defaultParsed.found).toBe(true)
+      expect(defaultParsed.story.id).toBe('story-1')
+
+      // With explicit prdFile, should find alternate-story in other.prd.json
+      const altResult = await getStoryDetails({ storyId: 'alternate-story', prdFile: 'other.prd.json' })
+      const altParsed = JSON.parse(altResult)
+      expect(altParsed.found).toBe(true)
+      expect(altParsed.story.id).toBe('alternate-story')
+      expect(altParsed.story.title).toBe('Alternate Story')
+
+      // With explicit prdFile, story-1 should NOT be found in other.prd.json
+      const notFoundResult = await getStoryDetails({ storyId: 'story-1', prdFile: 'other.prd.json' })
+      const notFoundParsed = JSON.parse(notFoundResult)
+      expect(notFoundParsed.found).toBe(false)
+    })
+
   })
 })

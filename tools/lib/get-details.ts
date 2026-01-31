@@ -25,10 +25,10 @@ import { resolvePrdFile, readPrdFile, findStoryById } from './prd-utils'
  */
 export async function getStoryDetails(options: {
   storyId: string
-
+  prdFile?: string
 }): Promise<string> {
   try {
-    const prdPath = await resolvePrdFile()
+    const prdPath = await resolvePrdFile({ prdFile: options.prdFile })
     const prd = await readPrdFile(prdPath)
 
     const story = findStoryById(prd, options.storyId)
