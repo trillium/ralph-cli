@@ -156,6 +156,7 @@ describe('get-details', () => {
       expect(parsed.found).toBe(false)
       expect(parsed.didYouMean).toBeDefined()
       expect(parsed.didYouMean).toHaveLength(1)
+      expect(parsed.didYouMean[0].storyId).toBe('feature-story-1')
       expect(parsed.didYouMean[0].prdFile).toBe('feature.active.prd.json')
       expect(parsed.didYouMean[0].storyTitle).toBe('Feature Story')
     })

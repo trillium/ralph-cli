@@ -13,10 +13,10 @@ import { getAllPrdTypes } from './config'
 async function findStoryInOtherPrdFiles(
   storyId: string,
   searchedPrdPath: string
-): Promise<{ prdFile: string; storyTitle: string }[]> {
+): Promise<{ storyId: string; prdFile: string; storyTitle: string }[]> {
   const cwd = process.cwd()
   const prdTypes = getAllPrdTypes(cwd)
-  const suggestions: { prdFile: string; storyTitle: string }[] = []
+  const suggestions: { storyId: string; prdFile: string; storyTitle: string }[] = []
   const searchedBasename = path.basename(searchedPrdPath)
 
   for (const [_typeName, typeConfig] of Object.entries(prdTypes)) {
@@ -28,7 +28,7 @@ async function findStoryInOtherPrdFiles(
           const prd = await readPrdFile(activePath)
           const story = findStoryById(prd, storyId)
           if (story) {
-            suggestions.push({ prdFile: typeConfig.active, storyTitle: story.title })
+            suggestions.push({ storyId: story.id, prdFile: typeConfig.active, storyTitle: story.title })
           }
         } catch {
           // Ignore errors reading other PRD files
@@ -44,7 +44,7 @@ async function findStoryInOtherPrdFiles(
           const prd = await readPrdFile(archivePath)
           const story = findStoryById(prd, storyId)
           if (story) {
-            suggestions.push({ prdFile: typeConfig.archive, storyTitle: story.title })
+            suggestions.push({ storyId: story.id, prdFile: typeConfig.archive, storyTitle: story.title })
           }
         } catch {
           // Ignore errors reading other PRD files
@@ -92,7 +92,7 @@ export async function getStoryDetails(options: {
         found: false
         error: string
         message: string
-        didYouMean?: { prdFile: string; storyTitle: string }[]
+        didYouMean?: { storyId: string; prdFile: string; storyTitle: string }[]
       } = {
         found: false,
         error: `Story '${options.storyId}' not found`,
